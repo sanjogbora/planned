@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planned Mission Control</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FAFAFA;--sb:#F4F4F5;--w:#fff;
+  --bd:#E4E4E7;--bd-lt:#F4F4F5;
+  --t1:#09090B;--t2:#71717A;--t3:#A1A1AA;
+  --blue:#2563EB;--blue-bg:#EFF6FF;
+  --green:#16A34A;--green-bg:#F0FDF4;
+  --red:#DC2626;--red-bg:#FEF2F2;
+  --send:#09090B;
+  --sh:0 1px 2px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.07);
+  --sh-md:0 4px 12px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.04);
+  --r:8px;--rmd:12px;--rlg:14px;--rf:9999px;
+  --f:'Montserrat',system-ui,sans-serif;
+  --sw:52px;
+}
+html,body{height:100%;overflow:hidden;font-family:var(--f);background:var(--bg);color:var(--t1);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.app{display:flex;height:100vh;overflow:hidden}
+
+/* Resize handles */
+.rz{width:4px;flex-shrink:0;cursor:col-resize;background:transparent;position:relative;z-index:20;transition:background .15s}
+.rz:hover,.rz.dragging{background:rgba(0,0,0,.08)}
+
+/* ── SIDEBAR ── */
+.sidebar{width:240px;min-width:150px;max-width:360px;background:var(--sb);border-right:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.sb-top{height:52px;padding:0 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.logo-mark{width:26px;height:26px;background:var(--t1);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.logo-name{font-size:14px;font-weight:600;letter-spacing:-.2px;flex:1;padding-left:8px}
+.new-btn{display:flex;align-items:center;gap:5px;padding:5px 10px;border-radius:var(--rf);border:1px solid var(--bd);background:var(--w);font-size:12px;font-weight:500;color:var(--t1);cursor:pointer;font-family:var(--f);box-shadow:var(--sh);white-space:nowrap;transition:background .1s}
+.new-btn:hover{background:#ECECED}
+.sb-body{flex:1;overflow-y:auto;padding:6px 8px 12px;scrollbar-width:thin;scrollbar-color:var(--bd) transparent}
+.sb-body::-webkit-scrollbar{width:3px}
+.sb-body::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px}
+.sb-sec{font-size:9.5px;font-weight:700;color:var(--t3);padding:12px 9px 4px;letter-spacing:.06em;text-transform:uppercase}
+.sb-item{display:flex;align-items:center;gap:9px;padding:6px 10px;border-radius:7px;cursor:pointer;font-size:13px;color:var(--t2);margin-bottom:1px;transition:all .12s}
+.sb-item:hover{background:rgba(0,0,0,.05);color:var(--t1)}
+.sb-item.on{background:var(--w);color:var(--t1);font-weight:500;box-shadow:var(--sh)}
+.sb-item svg{width:13px;height:13px;flex-shrink:0;opacity:.5}
+.sb-item.on svg{opacity:.85}
+.sb-item-label{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-hist{font-size:12.5px;color:var(--t2);padding:5px 9px;border-radius:7px;cursor:pointer;margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:all .1s}
+.sb-hist:hover{background:rgba(0,0,0,.05);color:var(--t1)}
+.sb-hist.on{background:var(--w);color:var(--t1);font-weight:500;box-shadow:var(--sh)}
+.sb-foot{padding:10px;border-top:1px solid var(--bd);display:flex;align-items:center;gap:9px;cursor:pointer;flex-shrink:0;overflow:hidden}
+.sb-foot:hover{background:rgba(0,0,0,.04)}
+.u-av{width:26px;height:26px;border-radius:var(--rf);background:#71717A;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.u-info{min-width:0}
+.u-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.u-sub{font-size:11px;color:var(--t3)}
+
+/* ── MAIN ── */
+.main{flex:1;min-width:300px;display:flex;flex-direction:column;overflow:hidden;background:var(--w);border-right:1px solid var(--bd)}
+.topbar{height:52px;border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0}
+.tb-toggle{width:32px;height:32px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;background:transparent;color:var(--t2);transition:background .1s;flex-shrink:0}
+.tb-toggle:hover{background:var(--sb)}
+.tb-toggle i,.tb-toggle svg{width:15px;height:15px}
+.tb-title{font-size:14px;font-weight:500;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-btns{display:flex;gap:2px}
+.tb-btn{width:32px;height:32px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;background:transparent;color:var(--t2);transition:background .1s}
+.tb-btn:hover{background:var(--sb)}
+.tb-btn i,.tb-btn svg{width:14px;height:14px}
+.chat-wrap{flex:1;overflow:hidden;display:flex;flex-direction:column}
+
+/* ── EMPTY / HOME ── */
+.empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px}
+.empty-title{font-size:27px;font-weight:600;letter-spacing:-.4px;margin-bottom:4px;text-align:center}
+.empty-sub{font-size:27px;font-weight:600;letter-spacing:-.4px;margin-bottom:32px;text-align:center;color:var(--t1)}
+.empty-sub .ac{color:var(--violet)}
+.w-box{width:100%;max-width:620px;border:1px solid var(--bd);border-radius:16px;background:var(--w);box-shadow:var(--sh-md);overflow:hidden}
+.wb-ta{padding:14px 16px 6px}
+.wb-textarea{width:100%;border:none;outline:none;background:transparent;font-family:var(--f);font-size:14px;color:var(--t1);resize:none;line-height:1.6;min-height:22px}
+.wb-textarea::placeholder{color:var(--t3)}
+.wb-foot{display:flex;align-items:center;gap:8px;padding:8px 12px 12px}
+.wb-attach{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:var(--rf);border:1px solid var(--bd);background:transparent;font-size:12px;color:var(--t2);cursor:pointer;font-family:var(--f)}
+.wb-attach i,.wb-attach svg{width:11px;height:11px}
+.wb-right{margin-left:auto;display:flex;gap:6px;align-items:center}
+.wb-mic{width:28px;height:28px;border-radius:var(--rf);border:1px solid var(--bd);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.wb-mic i,.wb-mic svg{width:12px;height:12px;color:var(--t2)}
+.wb-send{width:28px;height:28px;border-radius:var(--rf);background:#D4D4D8;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s}
+.wb-send.on{background:var(--send)}
+.wb-send i,.wb-send svg{width:12px;height:12px;color:#fff}
+
+/* ── MESSAGES ── */
+.msgs{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:18px;scrollbar-width:thin;scrollbar-color:var(--bd) transparent}
+.msgs::-webkit-scrollbar{width:4px}
+.msgs::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px}
+.msg-u{display:flex;justify-content:flex-end}
+.msg-u-b{max-width:60%;background:var(--sb);border:1px solid var(--bd);border-radius:16px 16px 4px 16px;padding:12px 16px;font-size:14px;line-height:1.6}
+.msg-a{display:flex;gap:11px}
+.m-av{width:26px;height:26px;border-radius:6px;background:#C0392B;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;margin-top:1px}
+.m-av.specialist{background:#1D4ED8}
+.m-body{flex:1;min-width:0}
+.m-name{font-size:12px;font-weight:600;margin-bottom:5px;display:flex;align-items:center;gap:8px}
+.m-time{font-size:11px;font-weight:400;color:var(--t3)}
+.m-text{font-size:13.5px;line-height:1.65;color:var(--t1);margin-bottom:10px}
+.m-sub{font-size:13px;color:var(--t2);line-height:1.6}
+
+/* ── THINKING ── */
+.thinking{background:var(--w);border:1px solid var(--bd);border-radius:var(--rlg);padding:14px 16px;max-width:400px;box-shadow:var(--sh);margin-bottom:10px}
+.thinking-hd{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;margin-bottom:10px}
+.spin-ic{flex-shrink:0;color:var(--t3);animation:spin 1.2s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.think-row{display:flex;align-items:center;gap:9px;padding:4px 0;font-size:12.5px;color:var(--t3);transition:color .25s}
+.think-row.done{color:var(--t2)}
+.think-row.active{color:var(--t1)}
+.t-dot{width:15px;height:15px;border-radius:var(--rf);border:1.5px solid var(--bd);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .25s}
+.t-dot.done{background:var(--green);border-color:var(--green)}
+.t-dot.done::after{content:'';width:5px;height:5px;border-radius:50%;background:#fff}
+.t-dot.active{border-color:var(--blue);animation:pb 1s ease-in-out infinite}
+@keyframes pb{0%,100%{box-shadow:0 0 0 0 rgba(37,99,235,.2)}50%{box-shadow:0 0 0 4px rgba(37,99,235,.1)}}
+.t-note{font-size:11px;color:var(--blue);font-weight:600;display:block;margin-top:2px}
+
+/* ── CARDS ── */
+.card{background:var(--w);border:1px solid var(--bd);border-radius:var(--rlg);overflow:hidden;box-shadow:var(--sh);margin-bottom:10px}
+.card-hd{padding:12px 15px;border-bottom:1px solid var(--bd-lt);display:flex;align-items:center;gap:9px}
+.card-hd i,.card-hd svg{width:13px;height:13px;color:var(--t3)}
+.card-title{font-size:14px;font-weight:600;flex:1}
+.card-body{padding:15px}
+.card-foot{padding:11px 15px;border-top:1px solid var(--bd-lt);display:flex;gap:8px;flex-wrap:wrap;background:var(--sb)}
+
+/* ── MISSION DRAFT ── */
+.mc{max-width:540px}
+.mc-prework{background:var(--sb);border-radius:var(--r);padding:11px 13px;margin-bottom:13px;font-size:12.5px;color:var(--t2);line-height:1.6;border:1px solid var(--bd)}
+.mc-prework strong{color:var(--t1)}
+.mc-grid{display:grid;grid-template-columns:1fr 1fr;gap:0}
+.mc-field{padding:9px 0;border-bottom:1px solid var(--bd-lt)}
+.mc-field:nth-last-child(-n+2){border-bottom:none}
+.mc-lbl{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+.mc-val{font-size:13.5px;font-weight:500}
+.mc-stats{display:flex;gap:18px;padding:12px 15px;background:var(--sb);border-top:1px solid var(--bd)}
+.mc-stat-n{font-size:20px;font-weight:700;line-height:1}
+.mc-stat-l{font-size:11px;color:var(--t3)}
+
+/* ── DECISION CHECKPOINT ── */
+.dec{max-width:500px}
+.dec-hdr{display:flex;align-items:center;justify-content:space-between;padding:9px 15px;border-bottom:1px solid var(--bd-lt);background:var(--sb)}
+.dec-cp{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--t3)}
+.dec-prog{font-size:11.5px;font-weight:600;color:var(--t2)}
+.dec-body{padding:15px 15px 12px}
+.dec-title{font-size:14.5px;font-weight:700;margin-bottom:7px}
+.dec-intro{font-size:13px;line-height:1.65;color:var(--t1);margin-bottom:5px}
+.dec-q{font-size:12px;color:var(--t3);margin-bottom:13px}
+.dec-opts{border:1px solid var(--bd);border-radius:var(--r);overflow:hidden}
+.d-opt{display:flex;align-items:flex-start;gap:11px;padding:11px 13px;border-bottom:1px solid var(--bd-lt);cursor:pointer;transition:background .1s}
+.d-opt:last-child{border-bottom:none}
+.d-opt:hover{background:#FAFAFA}
+.d-opt.sel{background:#FAFAFA;pointer-events:none}
+.d-opt.done{opacity:.28;pointer-events:none}
+.d-radio{width:15px;height:15px;border-radius:var(--rf);border:1.5px solid #D4D4D8;flex-shrink:0;margin-top:3px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.d-opt.sel .d-radio{background:var(--green);border-color:var(--green)}
+.d-opt.sel .d-radio::after{content:'';width:5px;height:5px;border-radius:50%;background:#fff}
+.d-oc{flex:1;min-width:0}
+.d-label{font-size:13px;font-weight:600;color:var(--t1);display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:2px}
+.d-rec{font-size:9.5px;font-weight:700;color:var(--blue);background:var(--blue-bg);padding:1px 7px;border-radius:var(--rf);letter-spacing:.02em}
+.d-impact{font-size:12px;color:var(--t3);line-height:1.4;margin-bottom:6px}
+
+/* Decision visual elements */
+.d-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+.d-tag{font-size:10.5px;font-weight:500;padding:2px 7px;border-radius:4px}
+.dt-good{background:var(--green-bg);color:var(--green)}
+.dt-warn{background:#F4F4F5;color:#52525B;border:1px solid var(--bd)}
+.dt-bad{background:#FEF2F2;color:var(--red)}
+.dt-neu{background:var(--sb);color:var(--t2);border:1px solid var(--bd)}
+
+.d-timeline{display:flex;align-items:center;margin-top:8px;background:var(--sb);border-radius:7px;padding:9px 12px;gap:0;border:1px solid var(--bd)}
+.dt-evt{display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0}
+.dt-dot{width:7px;height:7px;border-radius:50%}
+.dt-lbl{font-size:9px;color:var(--t3);white-space:nowrap;text-align:center}
+.dt-t{font-size:11px;font-weight:600;white-space:nowrap}
+.dt-conn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:0 8px}
+.dt-line{width:100%;height:1px;background:var(--bd)}
+.dt-chip{font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;white-space:nowrap}
+
+.d-price-row{display:flex;align-items:baseline;gap:8px;margin-top:7px}
+.d-price{font-size:15px;font-weight:700}
+.d-ptotal{font-size:11.5px;color:var(--t3)}
+
+.d-inds{display:flex;gap:14px;margin-top:8px}
+.d-ind{display:flex;flex-direction:column;gap:3px}
+.di-lbl{font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em}
+.di-bars{display:flex;gap:2px}
+.dib{width:14px;height:4px;border-radius:2px;background:var(--bd)}
+.dib.on{background:var(--t1)}
+
+/* Confirmed decision */
+.dec-confirmed{display:flex;align-items:flex-start;gap:11px;padding:11px 15px}
+.dc-ico{width:17px;height:17px;border-radius:var(--rf);background:var(--green-bg);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:700;flex-shrink:0;margin-top:3px}
+.dc-lbl{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.dc-val{font-size:13.5px;color:var(--t1);line-height:1.5}
+
+/* ── WORKSTREAM MAP ── */
+.ws-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ws-item{border:1px solid var(--bd);border-radius:var(--r);padding:11px;background:var(--w);cursor:pointer;transition:all .15s}
+.ws-item:hover{box-shadow:var(--sh-md);border-color:#C4C4C7}
+.ws-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:7px}
+.ws-icon{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ws-icon i,.ws-icon svg{width:12px;height:12px}
+.ws-name{font-size:12.5px;font-weight:600;margin-bottom:2px}
+.ws-next{font-size:11px;color:var(--t3)}
+
+/* ── RISK ── */
+.risk-card{max-width:480px}
+.risk-impact{padding:0 0 13px;margin-bottom:13px;border-bottom:1px solid var(--bd-lt);font-size:13px;color:var(--t1);line-height:1.65}
+.risk-impact strong{display:block;font-weight:600;margin-bottom:4px}
+
+/* ── HOTEL CARDS ── */
+.hotel-wrap{max-width:600px}
+.h-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:10px}
+.h-card{border:1px solid var(--bd);border-radius:var(--rlg);overflow:hidden;cursor:pointer;transition:all .15s;box-shadow:var(--sh);display:flex;flex-direction:column}
+.h-card:hover{box-shadow:var(--sh-md);border-color:#C4C4C7}
+.h-card.rec{border-color:#52525B;border-width:1.5px}
+.h-card.picked{border-color:var(--bd);}
+.h-img{height:110px;overflow:hidden;background:var(--sb);flex-shrink:0}
+.h-img img{width:100%;height:100%;object-fit:cover;display:block}
+.h-body{padding:11px;display:flex;flex-direction:column;flex:1}
+.h-tag{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--t3);margin-bottom:4px}
+.h-name{font-size:12.5px;font-weight:700;margin-bottom:8px;line-height:1.3}
+.h-props{display:flex;flex-direction:column;gap:4px;flex:1}
+.h-prop{font-size:11.5px;color:var(--t2);display:flex;align-items:flex-start;gap:5px;line-height:1.4}
+.h-prop i,.h-prop svg{width:10px;height:10px;flex-shrink:0;margin-top:2px;color:var(--t3)}
+.h-price{font-size:13px;font-weight:700;margin-top:10px;padding-top:8px;border-top:1px solid var(--bd-lt)}
+.h-pol{font-size:10.5px;font-weight:500;color:var(--t2);margin-left:3px}
+.h-pol.ok{color:var(--green)}
+.h-btn{width:100%;padding:8px;border-radius:7px;border:1px solid var(--bd);background:transparent;font-size:12px;font-weight:500;color:var(--t1);cursor:pointer;font-family:var(--f);transition:all .15s;margin-top:9px;flex-shrink:0}
+.h-btn:hover{background:var(--sb)}
+.h-card.rec .h-btn{background:var(--t1);color:#fff;border-color:var(--t1)}
+.h-card.rec .h-btn:hover{opacity:.85}
+.h-note{background:var(--sb);border:1px solid var(--bd);border-radius:var(--r);padding:12px;font-size:12.5px;color:var(--t2);line-height:1.6}
+.h-note strong{color:var(--t1)}
+
+/* ── VENDOR OUTREACH ── */
+.outreach-card{max-width:500px}
+.rfq-list{display:flex;flex-direction:column}
+.rfq-item{display:flex;align-items:center;gap:10px;padding:9px 15px;border-bottom:1px solid var(--bd-lt)}
+.rfq-item:last-child{border-bottom:none}
+.rfq-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.rfq-name{font-size:13px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rfq-pills{display:flex;gap:5px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end}
+.rfq-pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:2px 8px;border-radius:var(--rf);background:var(--sb);border:1px solid var(--bd);color:var(--t2);white-space:nowrap;cursor:default}
+.rfq-pill svg{opacity:.6}
+.rfq-pill.green{background:var(--green-bg);border-color:rgba(22,163,74,.2);color:var(--green)}
+.rfq-pill.blue{background:var(--blue-bg);border-color:rgba(37,99,235,.2);color:var(--blue)}
+
+/* ── BUDGET ── */
+.budget-card{max-width:480px}
+.b-bar{height:5px;background:var(--bd-lt);border-radius:var(--rf);overflow:hidden;margin:8px 0 12px}
+.b-fill{height:100%;border-radius:var(--rf);background:var(--t1);transition:width 1s ease}
+.b-cats{display:flex;flex-direction:column}
+.b-cat{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--bd-lt)}
+.b-cat:last-child{border-bottom:none}
+.b-cat i,.b-cat svg{width:12px;height:12px;color:var(--t3);flex-shrink:0}
+.b-cat-name{flex:1;font-size:13px;color:var(--t2)}
+.b-cat-val{font-size:13px;font-weight:500}
+.pol-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid var(--bd-lt)}
+.pol-chip{font-size:11px;font-weight:500;padding:2px 8px;border-radius:4px;background:#F4F4F5;color:#52525B;border:1px solid var(--bd)}
+
+/* ── APPROVAL ── */
+.appr-card{max-width:480px}
+.appr-top{display:flex;align-items:center;gap:12px;padding:13px 15px;background:var(--sb);border-bottom:1px solid var(--bd)}
+.appr-circle{width:44px;height:44px;border-radius:var(--rf);border:2.5px solid var(--green);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--green);flex-shrink:0}
+.appr-pct{font-size:15px;font-weight:700}
+.appr-sub{font-size:12px;color:var(--t3);margin-top:1px}
+.appr-row{display:flex;align-items:center;gap:10px;padding:9px 15px;border-bottom:1px solid var(--bd-lt);font-size:13px}
+.appr-row:last-child{border-bottom:none}
+.appr-ico{width:17px;height:17px;border-radius:var(--rf);display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:700;flex-shrink:0}
+.ai-done{background:var(--green-bg);color:var(--green)}
+.ai-pend{background:#F4F4F5;color:#52525B}
+
+/* ── ARTIFACT CARD ── */
+.artifact{background:var(--sb);border:1px solid var(--bd);border-radius:var(--rmd);padding:11px 13px;max-width:380px;display:flex;align-items:center;gap:11px;cursor:pointer;box-shadow:var(--sh);transition:all .15s;margin-bottom:10px}
+.artifact:hover{border-color:#C4C4C7;box-shadow:var(--sh-md)}
+.art-ico{width:34px;height:34px;border-radius:var(--r);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.art-ico i,.art-ico svg{width:14px;height:14px}
+.art-name{font-size:13px;font-weight:600;margin-bottom:1px}
+.art-sub{font-size:11.5px;color:var(--t3)}
+.art-chev{color:var(--t3);margin-left:auto;flex-shrink:0}
+.art-chev i,.art-chev svg{width:13px;height:13px}
+
+/* ── SPECIALIST ── */
+.specialist-bar{display:flex;align-items:center;gap:9px;padding:10px 13px;background:var(--blue-bg);border:1px solid rgba(37,99,235,.15);border-radius:var(--r);max-width:400px;font-size:12.5px;color:var(--blue);margin-bottom:10px}
+.spec-av{width:22px;height:22px;border-radius:5px;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:700;color:#fff;flex-shrink:0}
+.spec-dot{width:6px;height:6px;border-radius:50%;background:var(--green);margin-left:auto}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--rf);font-size:12.5px;font-weight:500;cursor:pointer;font-family:var(--f);border:1px solid transparent;transition:all .15s}
+.btn i,.btn svg{width:12px;height:12px}
+.btn-primary{background:var(--send);color:#fff;border-color:var(--send)}
+.btn-primary:hover{opacity:.85}
+.btn-outline{background:transparent;color:var(--t1);border-color:var(--bd)}
+.btn-outline:hover{background:var(--sb)}
+.btn-ghost{background:transparent;color:var(--t2);border-color:transparent}
+.btn-ghost:hover{background:var(--sb);color:var(--t1)}
+
+/* ── BADGE ── */
+.badge{display:inline-flex;align-items:center;font-size:11px;font-weight:600;padding:2px 8px;border-radius:var(--rf)}
+.b-blue{background:var(--blue-bg);color:var(--blue)}
+.b-green{background:var(--green-bg);color:var(--green)}
+.b-amber{background:#F4F4F5;color:#52525B;border:1px solid var(--bd)}
+.b-red{background:var(--red-bg);color:var(--red)}
+.b-gray{background:var(--sb);color:var(--t2);border:1px solid var(--bd)}
+
+/* ── CHAT INPUT ── */
+.input-area{border-top:1px solid var(--bd);padding:12px 20px 14px;flex-shrink:0}
+.i-box{border:1px solid var(--bd);border-radius:14px;background:var(--w);box-shadow:var(--sh-md);overflow:hidden}
+.i-ta-row{padding:12px 15px 6px;display:flex;align-items:flex-end;gap:8px}
+.i-ta{flex:1;border:none;outline:none;background:transparent;font-family:var(--f);font-size:13.5px;color:var(--t1);resize:none;line-height:1.5;min-height:22px}
+.i-ta::placeholder{color:var(--t3)}
+.i-foot{display:flex;align-items:center;gap:8px;padding:4px 11px 11px}
+.i-attach{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:var(--rf);border:1px solid var(--bd);background:transparent;font-size:12px;color:var(--t2);cursor:pointer;font-family:var(--f)}
+.i-attach i,.i-attach svg{width:11px;height:11px}
+.i-right{margin-left:auto;display:flex;gap:6px;align-items:center}
+.i-mic{width:27px;height:27px;border-radius:var(--rf);border:1px solid var(--bd);background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.i-mic i,.i-mic svg{width:12px;height:12px;color:var(--t2)}
+.i-send{width:27px;height:27px;border-radius:var(--rf);background:#D4D4D8;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s}
+.i-send.on{background:var(--send)}
+.i-send i,.i-send svg{width:11px;height:11px;color:#fff}
+
+/* ── RIGHT PANEL ── */
+.rpanel{width:380px;min-width:240px;max-width:560px;background:var(--sb);border-left:1px solid var(--bd);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0;transition:width .22s ease}
+.rp-top{height:52px;border-bottom:1px solid var(--bd);padding:0 15px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.rp-title{font-size:13px;font-weight:600}
+.rp-body{flex:1;overflow-y:auto;padding:14px;scrollbar-width:thin;scrollbar-color:var(--bd) transparent;display:flex;flex-direction:column;gap:13px}
+.rp-body::-webkit-scrollbar{width:3px}
+.rp-body::-webkit-scrollbar-thumb{background:var(--bd);border-radius:2px}
+.rp-sec-title{font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px}
+.rp-card{background:var(--w);border:1px solid var(--bd);border-radius:var(--rmd);padding:13px;box-shadow:var(--sh)}
+.rp-mission-name{font-size:14px;font-weight:700;margin-bottom:8px}
+.rp-meta-row{font-size:12.5px;color:var(--t2);margin-bottom:4px;display:flex;align-items:center;gap:7px}
+.rp-meta-row i,.rp-meta-row svg{width:11px;height:11px;color:var(--t3);flex-shrink:0}
+.rp-stat-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--bd-lt)}
+.rp-stat-row:last-child{border-bottom:none}
+.rp-stat-lbl{font-size:12.5px;color:var(--t2)}
+.rp-art-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bd-lt);cursor:pointer;transition:opacity .1s}
+.rp-art-row:last-child{border-bottom:none}
+.rp-art-row:hover{opacity:.7}
+.rp-art-name{font-size:12.5px;font-weight:500;flex:1}
+.r-bar{height:5px;background:var(--bd-lt);border-radius:var(--rf);overflow:hidden;margin:6px 0}
+.r-fill{height:100%;border-radius:var(--rf);background:var(--green);transition:width .8s ease}
+.rp-empty{font-size:13px;color:var(--t3);padding:24px 14px;text-align:center}
+
+/* Right panel wide when workstream open */
+.app.ws-open{grid-template-columns:var(--sw) 1fr 440px}
+
+/* Workstream detail in right panel */
+.wsd-card{background:var(--w);border:1px solid var(--bd);border-radius:var(--rmd);overflow:hidden;box-shadow:var(--sh)}
+.wsd-top{padding:14px 15px}
+.wsd-head-row{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
+.wsd-name{font-size:14px;font-weight:700;margin-bottom:5px}
+.wsd-back{font-size:12px;color:var(--blue);cursor:pointer;font-weight:500;white-space:nowrap}
+.wsd-back:hover{text-decoration:underline}
+.deadline-chip{font-size:11px;font-weight:600;padding:3px 9px;border-radius:var(--rf);background:#FEF2F2;color:var(--red);display:inline-flex;margin-top:6px}
+.wsd-divider{height:1px;background:var(--bd-lt)}
+.wsd-sec{padding:13px 15px}
+.wsd-sec-lbl{font-size:9.5px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:9px}
+.wsd-analysis{font-size:12.5px;color:var(--t2);line-height:1.65;margin-bottom:10px}
+.wsd-table{border:1px solid var(--bd);border-radius:var(--r);overflow:hidden}
+.wsd-row{display:grid;align-items:center;padding:7px 10px;border-bottom:1px solid var(--bd-lt);font-size:11.5px;gap:6px;min-width:0}
+.wsd-row:last-child{border-bottom:none}
+.wsd-hrow{background:var(--sb);font-size:9px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.04em}
+.wsd-c1{font-weight:500;color:var(--t1);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wsd-c2{color:var(--t2);white-space:nowrap;font-size:11px}
+.wsd-c3{font-weight:600;white-space:nowrap;font-size:11px}
+.wsd-c4{white-space:nowrap;display:flex;justify-content:flex-end}
+.partner-badge{font-size:9px;font-weight:700;color:var(--blue);background:var(--blue-bg);padding:1px 5px;border-radius:3px;margin-left:4px;white-space:nowrap}
+.wsd-act-item{display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--bd-lt);font-size:12.5px}
+.wsd-act-item:last-child{border-bottom:none}
+.wsd-act-dot{width:5px;height:5px;border-radius:50%;background:var(--t1);flex-shrink:0;margin-top:4px}
+.wsd-act-btn{display:inline-flex;margin-top:5px;padding:4px 10px;border-radius:var(--rf);border:1px solid var(--bd);background:transparent;font-size:11.5px;font-weight:500;color:var(--blue);cursor:pointer;font-family:var(--f)}
+.activity-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--t2);padding:4px 0}
+.act-dot-small{width:5px;height:5px;border-radius:50%;background:var(--t3);flex-shrink:0}
+.wsd-footer{display:flex;gap:7px;padding:12px 15px;border-top:1px solid var(--bd-lt)}
+.wsd-footer-btn{display:flex;align-items:center;gap:5px;padding:6px 11px;border-radius:var(--rf);border:1px solid var(--bd);background:transparent;font-size:12px;font-weight:500;color:var(--t2);cursor:pointer;font-family:var(--f);transition:all .1s}
+.wsd-footer-btn:hover{background:var(--sb);color:var(--t1)}
+.wsd-footer-btn svg{width:11px;height:11px}
+
+/* Sidebar workstream items */
+.sb-ws-sec{display:none;flex-direction:column;gap:1px;padding:4px 6px 6px}
+.app.sb-open .sb-ws-sec{display:flex}
+.sb-ws-item{display:flex;align-items:center;gap:7px;padding:5px 9px;border-radius:6px;cursor:pointer;font-size:12px;color:var(--t2);transition:all .1s}
+.sb-ws-item:hover{background:rgba(0,0,0,.05);color:var(--t1)}
+.sb-ws-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.sb-ws-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.hidden{display:none!important}
+.sep{height:1px;background:var(--bd-lt);margin:10px 0}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sb-top">
+    <div class="logo-mark">P</div>
+    <span class="logo-name">Planned</span>
+    <button class="new-btn" onclick="resetDemo()" title="New mission" style="padding:5px 8px">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>
+  </div>
+  <div class="sb-body">
+    <div class="sb-sec">Main</div>
+    <div class="sb-item" onclick="sbClick(this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span class="sb-item-label">Overview</span>
+    </div>
+    <div class="sb-item on" onclick="sbClick(this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span class="sb-item-label">Agent chat</span>
+    </div>
+    <div class="sb-item" onclick="sbClick(this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12H16l-2 3h-4l-2-3H2"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
+      <span class="sb-item-label">Inbox</span>
+    </div>
+    <div class="sb-sec">Mission workspace</div>
+    <div class="sb-item" id="sb-brief" onclick="sbClick(this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <span class="sb-item-label">Mission brief</span>
+    </div>
+    <div class="sb-item" id="sb-travel" onclick="sbClick(this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 2L11 13"/><path d="M22 2L15 22l-4-9-9-4 19-7z"/></svg>
+      <span class="sb-item-label">Travel plan</span>
+    </div>
+    <div class="sb-item" id="sb-market" onclick="sbClick(this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+      <span class="sb-item-label">Marketplace</span>
+    </div>
+    <div class="sb-item" onclick="sbClick(this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="9 15 12 18 15 12"/></svg>
+      <span class="sb-item-label">Proposal</span>
+    </div>
+    <div class="sb-item" onclick="sbClick(this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <span class="sb-item-label">Contracts</span>
+    </div>
+    <div class="sb-item" onclick="sbClick(this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      <span class="sb-item-label">Payments</span>
+    </div>
+    <div class="sb-item" id="sb-approvals" onclick="sbClick(this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+      <span class="sb-item-label">Approvals</span>
+    </div>
+    <div class="sb-sec">Planner tools</div>
+    <div class="sb-item" onclick="sbClick(this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+      <span class="sb-item-label">Checklist</span>
+    </div>
+    <div class="sb-item" onclick="sbClick(this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span class="sb-item-label">Agenda</span>
+    </div>
+    <div class="sb-item" onclick="sbClick(this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+      <span class="sb-item-label">Attendees</span>
+    </div>
+    <div class="sb-item" onclick="sbClick(this)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span class="sb-item-label">Risks</span>
+    </div>
+    <div class="sb-sec">Mission history</div>
+    <div class="sb-hist on">SaaStr 2026 Conference</div>
+    <div class="sb-hist">Sales Kickoff NYC</div>
+    <div class="sb-hist">Leadership Offsite Berlin</div>
+    <div class="sb-hist">Customer Summit Singapore</div>
+    <div class="sb-hist">Web Summit Booth Setup</div>
+  </div>
+  <div class="sb-foot">
+    <div class="u-av">MP</div>
+    <div class="u-info">
+      <div class="u-name">Maya Patel</div>
+      <div class="u-sub">Event Owner</div>
+    </div>
+  </div>
+</aside>
+<div class="rz" id="rz-left" data-panel="sidebar"></div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <span class="tb-title" id="tb-title"></span>
+    <div class="tb-btns">
+      <button class="tb-btn" onclick="resetDemo()" title="Reset"><i data-lucide="rotate-ccw"></i></button>
+      <button class="tb-btn"><i data-lucide="share-2"></i></button>
+      <button class="tb-btn"><i data-lucide="more-horizontal"></i></button>
+    </div>
+  </div>
+
+  <div class="chat-wrap">
+    <!-- EMPTY / HOME -->
+    <div id="empty" class="empty">
+      <div class="empty-title">Good morning, Maya.</div>
+      <div class="empty-sub">What's the <span class="ac">next plan?</span></div>
+      <div class="w-box">
+        <div class="wb-ta">
+          <textarea class="wb-textarea" id="w-ta" rows="3" oninput="onWInput(this)">We're attending SaaStr Annual in San Francisco with 12 employees. Need booth setup, flights, hotels, airport transfers, client dinner, internal team dinner, and meeting rooms. Budget is $85K. Dates are Sept 8 to 12.</textarea>
+        </div>
+        <div class="wb-foot">
+          <button class="wb-attach"><i data-lucide="paperclip"></i>Attach</button>
+          <div class="wb-right">
+            <button class="wb-mic"><i data-lucide="mic"></i></button>
+            <button class="wb-send on" onclick="startMission()"><i data-lucide="send"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MESSAGES -->
+    <div id="msgs" class="msgs hidden"></div>
+  </div>
+
+  <div class="input-area" id="input-area" style="display:none">
+    <div class="i-box">
+      <div class="i-ta-row">
+        <textarea class="i-ta" id="i-ta" placeholder="Message Marcy…" rows="1" oninput="onIInput(this)"></textarea>
+      </div>
+      <div class="i-foot">
+        <button class="i-attach"><i data-lucide="paperclip"></i>Attach</button>
+        <div class="i-right">
+          <button class="i-mic"><i data-lucide="mic"></i></button>
+          <button class="i-send" id="i-send" onclick="sendMsg()"><i data-lucide="send"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="rz" id="rz-right" data-panel="rpanel"></div>
+<!-- RIGHT PANEL -->
+<aside class="rpanel">
+  <div class="rp-top">
+    <span class="rp-title" id="rp-title">Mission overview</span>
+  </div>
+  <div class="rp-body" id="rp-body">
+    <div class="rp-empty">Start a mission to see details here</div>
+  </div>
+</aside>
+
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────
+const S={step:0,hotel:null,decisions:{},artifacts:[],risks:6,openDec:4,readiness:0};
+let decIdx=0;
+
+function $(id){return document.getElementById(id)}
+function scrollMsgs(){const m=$('msgs');setTimeout(()=>m.scrollTo({top:m.scrollHeight,behavior:'smooth'}),50)}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+function now(){const d=new Date(),h=d.getHours(),m=d.getMinutes();return(h%12||12)+':'+(m<10?'0'+m:m)+' '+(h<12?'AM':'PM')}
+function initIcons(){if(window.lucide)lucide.createIcons()}
+document.addEventListener('DOMContentLoaded',initIcons);
+
+// ── Sidebar ─────────────────────────────────────────────
+function sbClick(el){document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('on'));el.classList.add('on')}
+
+// ── Add message helpers ──────────────────────────────────
+function addEl(html){
+  const m=$('msgs'),d=document.createElement('div');
+  d.innerHTML=html.trim();
+  m.appendChild(d.firstElementChild);
+  initIcons();scrollMsgs();
+  return m.lastElementChild;
+}
+function addUserMsg(txt){addEl(`<div class="msg-u"><div class="msg-u-b">${txt}</div></div>`)}
+function marcyOpen(txt=''){
+  const el=addEl(`<div class="msg-a"><div class="m-av">M</div><div class="m-body"><div class="m-name">Marcy <span class="m-time">${now()}</span></div>${txt?`<div class="m-text">${txt}</div>`:''}<div class="m-content"></div></div></div>`);
+  return el.querySelector('.m-content');
+}
+
+// ── Thinking animation ───────────────────────────────────
+async function showThinking(container,steps){
+  container.innerHTML=`<div class="thinking"><div class="thinking-hd"><svg class="spin-ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Marcy is working…</div>${steps.map((s,i)=>`<div class="think-row" id="tr-${i}"><div class="t-dot" id="td-${i}"></div><div><div class="think-label">${s.label}</div><div class="t-note" id="tn-${i}" style="display:none">${s.note||''}</div></div></div>`).join('')}</div>`;
+  scrollMsgs();
+  for(let i=0;i<steps.length;i++){
+    $(`td-${i}`).classList.add('active');$(`tr-${i}`).classList.add('active');
+    await sleep(steps[i].ms||600);
+    $(`td-${i}`).classList.remove('active');$(`td-${i}`).classList.add('done');
+    $(`tr-${i}`).classList.remove('active');$(`tr-${i}`).classList.add('done');
+    if(steps[i].note)$(`tn-${i}`).style.display='';
+  }
+  await sleep(300);container.innerHTML='';
+}
+
+// ── Right panel ──────────────────────────────────────────
+function updateRP(){
+  if(S.step<2)return;
+  $('rp-title').textContent='Mission overview';
+  const arts=S.artifacts.map(a=>`<div class="rp-art-row"><span style="font-size:11px;color:var(--t3)">◻</span><span class="rp-art-name">${a.name}</span><span class="badge b-green" style="font-size:10px">${a.status}</span></div>`).join('');
+  $('rp-body').innerHTML=`
+    <div><div class="rp-sec-title">Mission</div><div class="rp-card">
+      <div class="rp-mission-name">SaaStr 2026 Conference</div>
+      <div class="rp-meta-row">Sept 8–12, 2026</div>
+      <div class="rp-meta-row">San Francisco, CA</div>
+      <div class="rp-meta-row">12 attendees</div>
+      <div class="rp-meta-row">$85,000 budget</div>
+    </div></div>
+    <div><div class="rp-sec-title">Status</div><div class="rp-card">
+      <div class="rp-stat-row"><span class="rp-stat-lbl">Open decisions</span><span class="badge ${S.openDec>0?'b-amber':'b-green'}">${S.openDec}</span></div>
+      <div class="rp-stat-row"><span class="rp-stat-lbl">Risks detected</span><span class="badge b-red">${S.risks}</span></div>
+      <div class="rp-stat-row"><span class="rp-stat-lbl">Artifacts created</span><span class="badge b-gray">${S.artifacts.length}</span></div>
+    </div></div>
+    ${S.artifacts.length?`<div><div class="rp-sec-title">Generated artifacts</div><div class="rp-card">${arts}</div></div>`:''}
+    <div><div class="rp-sec-title">Approval readiness</div><div class="rp-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+        <span style="font-size:15px;font-weight:700">${S.readiness}%</span>
+        <span class="badge ${S.readiness>=80?'b-green':S.readiness>=40?'b-amber':'b-red'}">${S.readiness>=80?'Ready':S.readiness>=40?'In progress':'Not ready'}</span>
+      </div>
+      <div class="r-bar"><div class="r-fill" style="width:${S.readiness}%"></div></div>
+      <div style="font-size:11.5px;color:var(--t3)">${S.readiness<80?'Complete decisions and approve exceptions to progress':'Ready for finance and procurement review'}</div>
+    </div></div>`;
+  initIcons();
+}
+
+// Workstream detail
+const WS_DATA={
+  Flights:{status:'Needs decision',sc:'b-amber',deadline:'Book by Sept 1',
+    analysis:'I mapped travel for all 12 attendees across 7 departure cities. 3 flights exceed the $1,200 policy cap.',
+    cols:'1fr 64px 56px 86px',
+    head:['Attendee','Route','Cost','Status'],
+    rows:[
+      ['Arjun Mehta','BLR → SFO','$1,847','b-red|Over policy'],
+      ['Lena Fischer','BER → SFO','$1,620','b-red|Over policy'],
+      ['Daniel Brooks','LHR → SFO','$1,340','b-red|Over policy'],
+      ['Maya Patel','JFK → SFO','$480','b-green|Within policy'],
+      ['Sarah Chen','Local','$—','b-gray|Based in SF'],
+    ],
+    actions:[
+      {text:'Review 3 policy exceptions',cta:'Chat about this',urgent:true},
+      {text:'Confirm Arjun early arrival (Sept 7)',cta:'Mark confirmed'},
+      {text:'Book all flights by Sept 1 for best rates',cta:'Start booking'},
+    ],
+    activity:['Mapped 7 departure cities and 12 itineraries','Flagged 3 policy exceptions for review','Pre-selected outbound times to align with booth schedule']
+  },
+  Hotels:{status:'Shortlisting',sc:'b-blue',deadline:'W SF quote expires Sept 2',
+    analysis:'Searched 14 hotels near Moscone from the Planned network. 2 are Planned partners with pre-negotiated group rates.',
+    cols:'1fr 55px 76px 80px',
+    head:['Hotel','Walk','Rate','Status'],
+    rows:[
+      ['W San Francisco ★','9 min','$175/night','b-blue|Recommended'],
+      ['Hyatt Centric','6 min','$189/night','b-gray|Option A'],
+      ['Marriott SoMa ★','28 min','$137/night','b-green|Policy-safe'],
+    ],
+    actions:[
+      {text:'Select hotel to lock the group rate',cta:'Select now',urgent:true},
+      {text:'Review 2 policy exception justifications',cta:'Review'},
+    ],
+    activity:['Searched 14 hotels in the Planned network','Negotiated partner rates for W SF and Marriott Courtyard','Flagged proximity vs policy tradeoff for your input']
+  },
+  'Booth setup':{status:'Risk detected',sc:'b-red',deadline:'Setup kit deadline: Sept 3',
+    analysis:'Booth vendor is EventPro SF — a Planned preferred vendor at Moscone. Full setup kit must be confirmed by Sept 3.',
+    cols:'1fr 80px 58px 76px',
+    head:['Item','Owner','Deadline','Status'],
+    rows:[
+      ['Setup kit order','Arjun Mehta','Sept 3','b-red|Urgent'],
+      ['Booth inspection','Arjun + Rohan','Sept 9, 8am','b-amber|Pending'],
+      ['Electricals','EventPro SF','Sept 8','b-green|Confirmed'],
+    ],
+    actions:[
+      {text:'Confirm setup kit by Sept 3',cta:'Confirm now',urgent:true},
+      {text:'Verify Arjun Sept 7 early arrival',cta:'Verify'},
+      {text:'EventPro SF: John Miller 415-555-0123',cta:'Call'},
+    ],
+    activity:['Identified EventPro SF via Planned vendor network','Flagged brand lead timing risk — resolved','Mapped booth inspection window vs travel schedule']
+  },
+  'Client dinner':{status:'Ready to source',sc:'b-green',deadline:'Reserve by Aug 25',
+    analysis:'12 clients (Directors+) + 6 team members on Sept 10. Relaxed networking tone selected. 3 Planned partner restaurants shortlisted.',
+    cols:'1fr 80px 64px 76px',
+    head:['Restaurant','Style','Rate','Status'],
+    rows:[
+      ['Bix Restaurant ★','Private dining','$92/head','b-blue|Top pick'],
+      ['Marlowe SF','Group setting','$88/head','b-gray|Option B'],
+      ['Wayfare Tavern','Upscale casual','$110/head','b-gray|Option C'],
+    ],
+    actions:[
+      {text:'Confirm reservation by Aug 25',cta:'Confirm',urgent:true},
+      {text:'Dietary: 2 vegetarian, 1 gluten-free — share with venue',cta:'Share'},
+    ],
+    activity:['Shortlisted 3 Planned partner restaurants','Matched dietary requirements against menus','Checked noise levels and private dining availability']
+  },
+  'Team dinner':{status:'Ready to source',sc:'b-green',deadline:'Reserve by Sept 1',
+    analysis:'12-person internal team dinner on Sept 11. Casual setting. Budget $65/head. I have 2 options ready.',
+    cols:'1fr 80px 64px 76px',
+    head:['Restaurant','Style','Rate','Status'],
+    rows:[
+      ['Cockscomb SF ★','American casual','$62/head','b-blue|Top pick'],
+      ['The Bird SF','Group friendly','$58/head','b-gray|Option B'],
+    ],
+    actions:[
+      {text:'Confirm team dinner date (Sept 11)',cta:'Confirm'},
+      {text:'Marcy will send inquiry on approval',cta:'Approve & send'},
+    ],
+    activity:['Shortlisted 2 venues for casual team dinner','Checked group availability on Sept 11','Budget: $65/head approved under team meals policy']
+  },
+  'Meeting rooms':{status:'Confirmed',sc:'b-green',deadline:null,
+    analysis:'Moscone West Meeting Room 14A reserved for Sept 8–12, 8am–6pm. Capacity 20. AV included.',
+    cols:'1fr 70px 72px 76px',
+    head:['Room','Dates','Capacity','Status'],
+    rows:[
+      ['Moscone West 14A','Sept 8–12','20 people','b-green|Confirmed'],
+      ['Breakout Room B2','Sept 9–10','8 people','b-green|On request'],
+    ],
+    actions:[
+      {text:'Add breakout room for client 1:1s on Sept 9–10',cta:'Add room'},
+      {text:'Share room schedule with all attendees',cta:'Share'},
+    ],
+    activity:['Reserved Moscone West 14A via Planned venue network','Confirmed AV setup and catering access for room','Added breakout option for private meetings']
+  },
+  'Ground transport':{status:'Mapping routes',sc:'b-blue',deadline:null,
+    analysis:'24 airport transfers needed across Sept 7–8 arrivals and Sept 12 departures. 5 ride groups identified.',
+    cols:'1fr 64px 72px 84px',
+    head:['Route','Date','Passengers','Status'],
+    rows:[
+      ['SFO → W San Francisco','Sept 7','5 people','b-blue|Planned'],
+      ['SFO → W San Francisco','Sept 8','7 people','b-blue|Planned'],
+      ['W SF → SFO','Sept 12','12 people','b-amber|Scheduling'],
+    ],
+    actions:[
+      {text:'Confirm ground transport provider',cta:'Select provider'},
+      {text:'Share individual pickup times with all attendees',cta:'Send schedule'},
+    ],
+    activity:['Mapped all 12 arrival and departure windows','Grouped travelers by arrival time for shared transport','Identified 5 distinct pickup groups']
+  },
+  Budget:{status:'In progress',sc:'b-amber',deadline:null,
+    analysis:'$82,400 of $85,000 committed. 2 policy exceptions. Medium confidence — booth and hotel quotes pending final confirmation.',
+    cols:'1fr 76px 76px 76px',
+    head:['Category','Est. cost','Status','Confidence'],
+    rows:[
+      ['Flights','$21,000','b-blue|Sourcing','b-gray|Medium'],
+      ['Hotels','$28,000','b-blue|Sourcing','b-gray|Medium'],
+      ['Booth setup','$18,000','b-green|Confirmed','b-green|High'],
+      ['Client dinner','$9,000','b-amber|Pending','b-gray|Medium'],
+      ['Transport','$4,200','b-blue|Mapping','b-gray|Medium'],
+      ['Meeting rooms','$2,200','b-green|Confirmed','b-green|High'],
+    ],
+    actions:[
+      {text:'Send 2 policy exceptions to finance for approval',cta:'Send to finance'},
+      {text:'Lock hotel rate to improve budget confidence',cta:'Lock rate'},
+    ],
+    activity:['Consolidated estimates across all 9 workstreams','Flagged 2 policy exceptions with justification','Identified $2,600 remaining headroom']
+  },
+  Approvals:{status:'Not ready',sc:'b-gray',deadline:null,
+    analysis:'Approval packet not yet ready. Waiting on hotel selection and policy exception approvals. 85% complete when all decisions are made.',
+    cols:'1fr 110px 90px',
+    head:['Item','Approver','Status'],
+    rows:[
+      ['Hotel policy exception','Finance team','b-amber|Pending'],
+      ['Dinner policy exception','Finance team','b-amber|Pending'],
+      ['Full mission budget','Maya Patel','b-gray|Not started'],
+      ['Vendor contracts','Procurement','b-gray|Not started'],
+    ],
+    actions:[
+      {text:'Complete hotel selection to unlock approval packet',cta:'Select hotel',urgent:true},
+      {text:'Generate approval packet when ready',cta:'Generate packet'},
+    ],
+    activity:['Pre-built approval packet structure','Added Sofia\'s specialist notes on booth terms','Documented all policy exceptions with reasoning']
+  },
+};
+
+const WS_LIST=[
+  {name:'Flights',dot:'var(--amber,#D97706)'},
+  {name:'Hotels',dot:'var(--blue)'},
+  {name:'Booth setup',dot:'var(--red)'},
+  {name:'Client dinner',dot:'var(--green)'},
+  {name:'Team dinner',dot:'var(--green)'},
+  {name:'Meeting rooms',dot:'var(--green)'},
+  {name:'Ground transport',dot:'var(--blue)'},
+  {name:'Budget',dot:'var(--amber,#D97706)'},
+  {name:'Approvals',dot:'var(--t3)'},
+];
+
+function openWorkstream(name){
+  const ws=WS_DATA[name];
+  if(!ws){return}
+  document.querySelector('.rpanel').style.width='480px';
+  $('rp-title').textContent=name;
+
+  const badge=(cls,lbl)=>`<span class="badge ${cls}" style="font-size:10px">${lbl}</span>`;
+  const cols=ws.cols||'1fr auto auto auto';
+  const hrow=`<div class="wsd-row wsd-hrow" style="grid-template-columns:${cols}">${ws.head.map(h=>`<span>${h}</span>`).join('')}</div>`;
+  const rows=ws.rows.map(r=>{
+    const last=r[r.length-1].split('|');
+    const cells=r.slice(0,-1).map((c,i)=>{
+      const isFirst=i===0;
+      const hasPart=c.includes('★');
+      const clean=c.replace('★','');
+      return`<span class="${isFirst?'wsd-c1':'wsd-c2'}">${clean}${hasPart?`<span class="partner-badge">Partner</span>`:''}</span>`;
+    });
+    return`<div class="wsd-row" style="grid-template-columns:${cols}">${cells.join('')}<span class="wsd-c4">${badge(last[0],last[1])}</span></div>`;
+  }).join('');
+
+  const actions=ws.actions.map(a=>`<div class="wsd-act-item"><div class="wsd-act-dot"></div><div><div>${a.text}</div><button class="wsd-act-btn" style="${a.urgent?'color:var(--red);border-color:rgba(220,38,38,.3)':''}">${a.cta}</button></div></div>`).join('');
+  const activity=ws.activity.map(a=>`<div class="activity-item"><div class="act-dot-small"></div>${a}</div>`).join('');
+
+  $('rp-body').innerHTML=`<div class="wsd-card">
+    <div class="wsd-top">
+      <div class="wsd-head-row">
+        <div>
+          <div class="wsd-name">${name}</div>
+          ${badge(ws.sc,ws.status)}
+        </div>
+        <span class="wsd-back" onclick="closeWorkstream()">← Overview</span>
+      </div>
+      ${ws.deadline?`<div class="deadline-chip">${ws.deadline}</div>`:''}
+    </div>
+    <div class="wsd-divider"></div>
+    <div class="wsd-sec">
+      <div class="wsd-sec-lbl">AI analysis</div>
+      <div class="wsd-analysis">${ws.analysis}</div>
+      <div class="wsd-table">${hrow}${rows}</div>
+    </div>
+    <div class="wsd-divider"></div>
+    <div class="wsd-sec">
+      <div class="wsd-sec-lbl">Action items</div>
+      ${actions}
+    </div>
+    <div class="wsd-divider"></div>
+    <div class="wsd-sec">
+      <div class="wsd-sec-lbl">Marcy's activity</div>
+      ${activity}
+    </div>
+    <div class="wsd-footer">
+      <button class="wsd-footer-btn"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Chat about this</button>
+      <button class="wsd-footer-btn"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Download</button>
+      <button class="wsd-footer-btn"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>Share</button>
+    </div>
+  </div>`;
+}
+
+function closeWorkstream(){
+  document.querySelector('.rpanel').style.width='';
+  $('rp-title').textContent='Mission overview';
+  updateRP();
+}
+
+
+// ── Flow ─────────────────────────────────────────────────
+async function startMission(){
+  $('empty').classList.add('hidden');
+  $('msgs').classList.remove('hidden');
+  $('input-area').style.display='';
+  $('tb-title').textContent="SaaStr 2026 Conference Mission";
+
+  const prompt=$('w-ta').value.trim();
+  addUserMsg(prompt);
+  S.step=1;
+
+  const container=marcyOpen();
+  await showThinking(container,[
+    {label:'Reading mission brief…',ms:950},
+    {label:'Identifying workstreams…',ms:1050,note:'9 found'},
+    {label:'Searching 14 hotels near Moscone from Planned network…',ms:1100},
+    {label:'Mapping 12 attendees across 7 departure cities…',ms:950},
+    {label:'Flagging booth setup deadline and timing risks…',ms:850},
+    {label:'Cross-checking Planned supplier network…',ms:950,note:'4 partners matched'},
+    {label:'Estimating budget across all workstreams…',ms:1050,note:'$82,400'},
+    {label:'Detecting policy exceptions…',ms:750,note:'2 found'},
+    {label:'Mission ready — 4 decisions remaining',ms:700},
+  ]);
+
+  container.innerHTML='';
+  const p=container.closest('.m-body');
+  const t=document.createElement('div');t.className='m-text';
+  t.innerHTML=`I built your mission workspace for SaaStr 2026. Before I start sourcing, I need <strong>4 decisions</strong> from you — I've already done the analysis and pre-selected recommended options.`;
+  p.insertBefore(t,container);
+
+  container.innerHTML=`
+    <div class="card mc">
+      <div class="card-hd"><i data-lucide="briefcase-business"></i><span class="card-title">SaaStr 2026 Conference Mission</span><span class="badge b-blue">Draft</span></div>
+      <div class="card-body">
+        <div class="mc-prework">I analysed <strong>14 hotels</strong>, mapped travel for <strong>12 attendees</strong> across 7 cities, reviewed <strong>3 booth vendors</strong>, shortlisted <strong>6 catering options</strong>, and identified <strong>6 risks</strong>. Everything is prepared — I only need your judgment on 4 strategic tradeoffs.</div>
+        <div class="mc-grid">
+          <div class="mc-field"><div class="mc-lbl">Dates</div><div class="mc-val">Sept 8–12, 2026</div></div>
+          <div class="mc-field"><div class="mc-lbl">Location</div><div class="mc-val">San Francisco, CA</div></div>
+          <div class="mc-field"><div class="mc-lbl">Team size</div><div class="mc-val">12 employees</div></div>
+          <div class="mc-field"><div class="mc-lbl">Budget</div><div class="mc-val">$85,000</div></div>
+          <div class="mc-field"><div class="mc-lbl">Mission type</div><div class="mc-val">Conference participation</div></div>
+          <div class="mc-field"><div class="mc-lbl">Goal</div><div class="mc-val">Lead gen & client meetings</div></div>
+        </div>
+        <div class="mc-stats">
+          <div class="mc-stat"><div class="mc-stat-n">9</div><div class="mc-stat-l">Workstreams</div></div>
+          <div class="mc-stat"><div class="mc-stat-n" style="color:var(--red)">6</div><div class="mc-stat-l">Risks detected</div></div>
+          <div class="mc-stat"><div class="mc-stat-n">4</div><div class="mc-stat-l">Decisions needed</div></div>
+        </div>
+      </div>
+      <div class="card-foot">
+        <button class="btn btn-primary" onclick="runDecisions()">Resolve 4 decisions</button>
+        <button class="btn btn-outline" onclick="flashSb('sb-brief')">Open brief</button>
+        <button class="btn btn-ghost" onclick="editMission(this)">Edit details</button>
+      </div>
+    </div>`;
+
+  S.step=2;
+  S.artifacts.push({name:'Mission Brief',status:'Created'});
+  updateRP();initIcons();scrollMsgs();
+}
+
+// ── Decisions ────────────────────────────────────────────
+function tags(arr){return`<div class="d-tags">${arr.map(t=>`<span class="d-tag ${t[1]}">${t[0]}</span>`).join('')}</div>`}
+function timeline(evt){
+  const[a,b,c]=evt;
+  return`<div class="d-timeline"><div class="dt-evt"><div class="dt-dot" style="background:${a[2]}"></div><div class="dt-t">${a[0]}</div><div class="dt-lbl">${a[1]}</div></div><div class="dt-conn"><div class="dt-line"></div><div class="dt-chip" style="background:${b[2]};color:${b[3]}">${b[0]}</div></div><div class="dt-evt"><div class="dt-dot" style="background:${c[2]}"></div><div class="dt-t">${c[0]}</div><div class="dt-lbl">${c[1]}</div></div></div>`;
+}
+function inds(arr){return`<div class="d-inds">${arr.map(([lbl,n])=>`<div class="d-ind"><div class="di-lbl">${lbl}</div><div class="di-bars">${Array.from({length:4},(_,i)=>`<div class="dib${i<n?' on':''}"></div>`).join('')}</div></div>`).join('')}</div>`}
+function priceRow(ph,tot){return`<div class="d-price-row"><span class="d-price">${ph}<span style="font-size:11px;font-weight:400;color:var(--t3)">/head</span></span><span class="d-ptotal">${tot}</span></div>`}
+
+const DECISIONS=[
+  {
+    checkpoint:'Mission strategy',
+    intro:'I recommend a <strong>Balanced strategy</strong> for this mission. I compared all 14 hotel options and 6 transport combinations across cost, proximity, comfort, and approval risk — Balanced scores best overall at $82,400.',
+    q:'Confirm or choose a different priority below.',
+    opts:[
+      {label:'Lowest cost',impact:'Optimise spend across all vendors',extra:tags([['~$76K total','dt-neu'],['28min avg commute','dt-warn'],['Higher fatigue','dt-bad']])},
+      {label:'Venue proximity',impact:'Closest suppliers to Moscone Center',extra:tags([['<6min walk','dt-good'],['+$52/night avg','dt-warn'],['More exceptions needed','dt-warn']])},
+      {label:'Team comfort',impact:'Protect recovery and readiness windows',extra:tags([['Rest windows protected','dt-good'],['12min avg walk','dt-neu'],['+$4,200 cost','dt-warn']])},
+      {label:'Client impression',impact:'Premium venues, stronger hospitality signal',extra:tags([['Premium venues','dt-good'],['~$87K total','dt-bad'],['Finance approval req.','dt-warn']])},
+      {label:'Balanced',impact:'Best across all four dimensions',isRec:true,extra:tags([['9min walk','dt-good'],['$82,400 total','dt-good'],['0 high risks','dt-good'],['2 exceptions flagged','dt-neu']])},
+    ],
+    collapsed:s=>`Strategy: <strong>${s}</strong> — hotel scoring, flights, and budget tradeoffs updated.`,
+    changed:s=>`Optimizing for <strong>${s}</strong>. Hotel rankings, flight timing, and dinner budget adjusted accordingly.`
+  },
+  {
+    checkpoint:'Booth readiness',
+    intro:'<strong>Timing risk detected.</strong> I mapped all 5 booth team members\' travel. Arjun Mehta (Brand Lead) currently lands 8h 15min before inspection — not enough recovery time. I recommend arriving Sept 7.',
+    q:'Should the booth team arrive one day earlier?',
+    opts:[
+      {label:'Yes — arrive Sept 7',impact:'Adds ~$2,800 in hotel nights. Eliminates launch-day risk.',isRec:true,
+       extra:timeline([['Sept 7','Team arrives','var(--green)'],['15h buffer','dt-good green','var(--green-bg)','var(--green)'],['Sept 9, 8am','Booth inspection','var(--t2)']])},
+      {label:'No — arrive Sept 8',impact:'Saves cost. Brand lead arrives only 8h before inspection.',
+       extra:timeline([['Sept 8, 11:45pm','Team arrives','var(--red)'],['8h gap','Tight','#FEF2F2','var(--red)'],['Sept 9, 8am','Booth inspection','var(--t2)']])},
+      {label:'Ask Planned specialist',impact:'Expert logistics review — adds 4–6 hours to sourcing.',
+       extra:tags([['Delays sourcing','dt-warn'],['Expert judgment','dt-good']])},
+    ],
+    collapsed:s=>`Booth arrival: <strong>${s}</strong>`,
+    changed:s=>s.includes('Sept 7')?'Updated. Booth team arrives Sept 7. Early check-in flagged and transport adjusted.':'Noted. Sept 8 arrival. Setup risk logged in the mission tracker.'
+  },
+  {
+    checkpoint:'Client dinner',
+    intro:'Client dinner is Sept 10. I reviewed the 12-person guest list — all at Director+ level, no prior dinner on record. I suggest <strong>Relaxed networking</strong> based on the relationship stage and budget fit.',
+    q:'Override if you have more context on the client relationship.',
+    opts:[
+      {label:'Premium & private',impact:'Best for new or key accounts. Requires finance approval.',
+       extra:priceRow('$180','~$10,800 total')+tags([['Finance approval','dt-warn'],['Private room','dt-neu']])},
+      {label:'Relaxed networking',impact:'Relationship-building. Within policy. Marcy has 3 options shortlisted.',isRec:true,
+       extra:priceRow('$95','~$5,700 total')+tags([['Within policy','dt-good'],['Group setting','dt-neu'],['3 Planned partners','dt-good']])},
+      {label:'Executive formal',impact:'Structured agenda. Best for leadership-heavy guest lists.',
+       extra:priceRow('$220','~$13,200 total')+tags([['Finance approval','dt-warn'],['Structured format','dt-neu']])},
+      {label:'Let AI recommend',impact:'Marcy sources based on the client profile data.',
+       extra:tags([['Uses CRM data','dt-neu'],['Marcy decides','dt-neu']])},
+    ],
+    collapsed:s=>`Client dinner: <strong>${s}</strong>`,
+    changed:s=>`Sourcing restaurants for a <strong>${s.toLowerCase()}</strong> tone — filtering by private dining, noise level, and dietary options.`
+  },
+  {
+    checkpoint:'Policy handling',
+    intro:'Two hotels within 9 minutes of Moscone are $38–$52 above the nightly cap. The policy-safe option is 28 minutes away — that\'s 45 team-hours lost over 5 days. I recommend allowing justified exceptions.',
+    q:'How should I handle hotel policy exceptions?',
+    opts:[
+      {label:'Strictly within policy',impact:'No exceptions filed. Policy-safe hotel is 28min commute.',
+       extra:inds([['Speed',4],['Control',4],['Proximity',1]])},
+      {label:'Allow exceptions if justified',impact:'I explain reasoning for each. Finance notified where required.',isRec:true,
+       extra:inds([['Speed',4],['Control',3],['Proximity',4]])},
+      {label:'Escalate all to finance',impact:'Full approval chain for every exception. Adds 1–2 days.',
+       extra:inds([['Speed',1],['Control',4],['Proximity',4]])},
+    ],
+    collapsed:s=>`Hotel policy: <strong>${s}</strong>`,
+    changed:s=>s.includes('Allow')?'Got it. Hotels above policy only when they reduce commute or fatigue. Finance approval added where needed.':s.includes('Strictly')?'Understood. Only sourcing within the nightly cap. Closest option has a 28-min commute.':'All exceptions flagged for finance review. May add 1–2 days to sourcing.'
+  }
+];
+
+async function runDecisions(){decIdx=0;await showNextDecision()}
+
+async function showNextDecision(){
+  if(decIdx>=DECISIONS.length){await afterDecisions();return}
+  const dec=DECISIONS[decIdx];
+  const pre=decIdx===0?'I need <strong>4 decisions</strong> before I start sourcing. I\'ve pre-selected recommended options — confirm or override each.':null;
+  const container=marcyOpen(pre);
+  const opts=dec.opts.map((o,i)=>`
+    <div class="d-opt" onclick="selectDec(this,${decIdx},${i})">
+      <div class="d-radio"></div>
+      <div class="d-oc">
+        <div class="d-label">${o.label}${o.isRec?'<span class="d-rec">Recommended</span>':''}</div>
+        <div class="d-impact">${o.impact}</div>
+        ${o.extra||''}
+      </div>
+    </div>`).join('');
+  container.innerHTML=`<div class="card dec"><div class="dec-hdr"><span class="dec-cp">Decision checkpoint</span><span class="dec-prog">${decIdx+1} of ${DECISIONS.length}</span></div><div class="dec-body"><div class="dec-title">${dec.checkpoint}</div><div class="dec-intro">${dec.intro}</div>${dec.q?`<div class="dec-q">${dec.q}</div>`:''}<div class="dec-opts">${opts}</div></div></div>`;
+  scrollMsgs();
+}
+
+async function selectDec(el,decI,optI){
+  const card=el.closest('.card'),dec=DECISIONS[decI],lbl=dec.opts[optI].label;
+  card.querySelectorAll('.d-opt').forEach(o=>o.classList.add('done'));
+  el.classList.remove('done');el.classList.add('sel');
+  S.decisions[decI]=optI;S.openDec=Math.max(0,S.openDec-1);
+  S.readiness=Math.round((decI+1)/DECISIONS.length*30);updateRP();
+  await sleep(450);
+  card.innerHTML=`<div class="dec-confirmed"><div class="dc-ico">✓</div><div><div class="dc-lbl">${dec.checkpoint}</div><div class="dc-val">${dec.collapsed(lbl)}</div></div></div>`;
+  await sleep(350);
+  const d=document.createElement('div');d.className='msg-a';
+  d.innerHTML=`<div class="m-av">M</div><div class="m-body"><div class="m-name">Marcy <span class="m-time">${now()}</span></div><div class="m-sub">${dec.changed(lbl)}</div></div>`;
+  $('msgs').appendChild(d);scrollMsgs();
+  await sleep(650);decIdx++;await showNextDecision();
+}
+
+// ── After decisions ─────────────────────────────────────
+async function afterDecisions(){
+  S.openDec=0;S.readiness=38;updateRP();
+  const c1=marcyOpen('All 4 decisions logged. Here\'s the full mission map — I\'m sourcing across 9 workstreams. Click any card to see details, vendor options, and action items.');
+  await sleep(300);
+
+  const WS=[
+    {name:'Flights',icon:'plane',sc:'b-amber',bg:'var(--amber-bg,#FFFBEB)',next:'3 policy exceptions',col:'#D97706'},
+    {name:'Hotels',icon:'building-2',sc:'b-blue',bg:'var(--blue-bg)',next:'Shortlisting now',col:'var(--blue)'},
+    {name:'Booth setup',icon:'store',sc:'b-red',bg:'var(--red-bg)',next:'Deadline in 6 days',col:'var(--red)'},
+    {name:'Client dinner',icon:'utensils',sc:'b-green',bg:'var(--green-bg)',next:'3 venues shortlisted',col:'var(--green)'},
+    {name:'Team dinner',icon:'utensils',sc:'b-green',bg:'var(--green-bg)',next:'Ready to source',col:'var(--green)'},
+    {name:'Meeting rooms',icon:'monitor',sc:'b-green',bg:'var(--green-bg)',next:'Moscone West available',col:'var(--green)'},
+    {name:'Ground transport',icon:'car',sc:'b-blue',bg:'var(--blue-bg)',next:'Mapping 24 trips',col:'var(--blue)'},
+    {name:'Budget',icon:'badge-dollar-sign',sc:'b-amber',bg:'var(--amber-bg,#FFFBEB)',next:'$82,400 estimated',col:'#D97706'},
+    {name:'Approvals',icon:'shield-check',sc:'b-gray',bg:'var(--sb)',next:'Awaiting decisions',col:'var(--t3)'},
+  ];
+
+  const wsIcons={
+    'Flights':'<i data-lucide="plane" style="display:block;width:13px;height:13px"></i>',
+    'Hotels':'<i data-lucide="building-2" style="display:block;width:13px;height:13px"></i>',
+    'Booth setup':'<i data-lucide="package" style="display:block;width:13px;height:13px"></i>',
+    'Client dinner':'<i data-lucide="utensils" style="display:block;width:13px;height:13px"></i>',
+    'Team dinner':'<i data-lucide="utensils" style="display:block;width:13px;height:13px"></i>',
+    'Meeting rooms':'<i data-lucide="presentation" style="display:block;width:13px;height:13px"></i>',
+    'Ground transport':'<i data-lucide="car" style="display:block;width:13px;height:13px"></i>',
+    'Budget':'<i data-lucide="banknote" style="display:block;width:13px;height:13px"></i>',
+    'Approvals':'<i data-lucide="shield-check" style="display:block;width:13px;height:13px"></i>',
+  };
+  c1.innerHTML=`<div class="card" style="max-width:560px"><div class="card-hd"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span class="card-title">Mission workstreams</span><span class="badge b-gray">9 total</span></div><div class="card-body"><div class="ws-grid">${WS.map(w=>`<div class="ws-item" onclick="openWorkstream('${w.name}')"><div class="ws-top"><div class="ws-icon" style="background:${w.bg};color:${w.col}">${wsIcons[w.name]||''}</div><span class="badge ${w.sc}" style="font-size:10px">${w.sc==='b-red'?'Risk':w.sc==='b-blue'?'Active':w.sc==='b-green'?'Ready':'Pending'}</span></div><div class="ws-name">${w.name}</div><div class="ws-next">${w.next}</div></div>`).join('')}</div></div><div class="card-foot"><button class="btn btn-primary" onclick="showRisk()">Review top risk</button></div></div>`;
+
+  S.artifacts.push({name:'Mission Overview',status:'Created'});S.readiness=42;updateRP();
+  initIcons();scrollMsgs();
+}
+
+// ── Risk ────────────────────────────────────────────────
+async function showRisk(){
+  const c=marcyOpen('One risk needs your decision before I finalise travel.');
+  await sleep(200);
+  c.innerHTML=`<div class="card risk-card"><div class="card-hd"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span class="card-title">Booth setup risk</span><span class="badge b-red">High</span></div><div class="card-body"><div class="risk-impact"><strong>Brand lead arrives after booth inspection window</strong>Arjun Mehta (Brand Lead, Bangalore) currently lands at 11:45 PM on Sept 8 — only 8 hours before the booth inspection at 8 AM Sept 9. No brand sign-off before the conference opens.<br><br><span style="font-size:12.5px;color:var(--t2)">Impact: Booth may open without brand approval at a flagship conference.</span></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><button class="btn btn-primary" style="width:fit-content" onclick="resolveRisk(this)">Move Arjun's flight earlier</button><button class="btn btn-outline" style="width:fit-content">Assign backup reviewer</button></div><div style="font-size:12px;color:var(--t3)">Or request a Planned specialist to review this timing risk.</div></div></div>`;
+  initIcons();scrollMsgs();
+}
+
+async function resolveRisk(btn){
+  btn.closest('.card').querySelectorAll('button').forEach(b=>{b.disabled=true;b.style.opacity='.35'});
+  const c=marcyOpen();
+  await showThinking(c,[
+    {label:'Recalculating arrival choreography…',ms:700},
+    {label:'Checking Bangalore → SFO flight options…',ms:600},
+    {label:'Verifying early check-in at W San Francisco…',ms:500},
+    {label:'Updating transport plan for Sept 7…',ms:400},
+  ]);
+  c.innerHTML='';
+  const p=c.closest('.m-body');
+  const t=document.createElement('div');t.className='m-text';
+  t.innerHTML=`Flight updated. Arjun now arrives at <strong>5:20 PM on Sept 8</strong> — 14 hours before the booth inspection. W San Francisco confirmed early check-in. Budget impact: <strong>+$340</strong>.`;
+  p.insertBefore(t,c);
+  await sleep(400);
+  await showOutreach();
+}
+
+// ── Vendor outreach ──────────────────────────────────────
+async function showOutreach(){
+  const c=marcyOpen();
+  await showThinking(c,[
+    {label:'Sending RFQs to shortlisted hotels…',ms:600},
+    {label:'Requesting catering quotes from Planned network…',ms:500},
+    {label:'Confirming meeting room availability…',ms:400},
+  ]);
+  c.innerHTML='';
+  const p=c.closest('.m-body');
+  const t=document.createElement('div');t.className='m-text';
+  t.innerHTML=`I've sent outreach to all shortlisted suppliers. First responses expected within 2 hours.`;
+  p.insertBefore(t,c);
+
+  const dI=`<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+  c.innerHTML=`<div class="card outreach-card"><div class="card-hd"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 2L11 13M22 2L15 22l-4-9-9-4 19-7z"/></svg><span class="card-title">Supplier outreach</span><span class="badge b-blue">Live</span></div><div class="rfq-list">
+    <div class="rfq-item"><div class="rfq-dot" style="background:var(--green)"></div><span class="rfq-name">W San Francisco</span><div class="rfq-pills"><span class="rfq-pill green">${dI}RFQ sent</span><span class="rfq-pill blue">${dI}Partner rate</span></div></div>
+    <div class="rfq-item"><div class="rfq-dot" style="background:var(--green)"></div><span class="rfq-name">Hyatt Centric</span><div class="rfq-pills"><span class="rfq-pill green">${dI}RFQ sent</span></div></div>
+    <div class="rfq-item"><div class="rfq-dot" style="background:var(--green)"></div><span class="rfq-name">Bix Restaurant (client dinner)</span><div class="rfq-pills"><span class="rfq-pill green">${dI}Inquiry sent</span><span class="rfq-pill blue">${dI}Partner</span></div></div>
+    <div class="rfq-item"><div class="rfq-dot" style="background:var(--green)"></div><span class="rfq-name">EventPro SF (booth)</span><div class="rfq-pills"><span class="rfq-pill">${dI}Deadline flagged</span></div></div>
+    <div class="rfq-item"><div class="rfq-dot" style="background:var(--t3)"></div><span class="rfq-name">Marriott Courtyard SoMa</span><div class="rfq-pills"><span class="rfq-pill">${dI}Awaiting</span></div></div>
+  </div></div>`;
+
+  // Specialist bar
+  const sp=document.createElement('div');
+  sp.className='specialist-bar';
+  sp.innerHTML=`<div class="spec-av">SB</div>Sofia Benhmida from Planned is reviewing the booth vendor terms`;
+  c.after(sp);
+
+  initIcons();scrollMsgs();
+  await sleep(2000);
+  await showHotels();
+}
+
+// ── Hotels ───────────────────────────────────────────────
+async function showHotels(){
+  const c=marcyOpen();
+  await showThinking(c,[
+    {label:'Hotel responses received — comparing 3 options…',ms:700},
+    {label:'Applying your Balanced strategy to rankings…',ms:500},
+    {label:'Verifying group availability Sept 8–12…',ms:400},
+  ]);
+
+  c.innerHTML='';
+  const p=c.closest('.m-body');
+  const t=document.createElement('div');t.className='m-text';
+  t.innerHTML=`Quotes received. <strong>Hotel B (W San Francisco)</strong> is my recommendation — 9-min walk, early check-in for the booth team, and a Planned partner rate.`;
+  p.insertBefore(t,c);
+
+  c.innerHTML=`<div class="hotel-wrap">
+    <div class="h-grid">
+      <div class="h-card" onclick="pickHotel(this,'a')">
+        <div class="h-img"><img src="https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=600&h=300&fit=crop&q=80" loading="lazy"></div>
+        <div class="h-body">
+          <div class="h-tag">Option A · Closest</div>
+          <div class="h-name">Hyatt Centric Fisherman's Wharf</div>
+          <div class="h-props">
+            <div class="h-prop"><i data-lucide="map-pin"></i>6-min walk to Moscone</div>
+            <div class="h-prop"><i data-lucide="clock"></i>Standard check-in only</div>
+            <div class="h-prop"><i data-lucide="monitor"></i>Meeting room available</div>
+          </div>
+          <div class="h-price">$189/night <span class="h-pol">+$52 over policy</span></div>
+          <button class="h-btn">Select Hotel A</button>
+        </div>
+      </div>
+      <div class="h-card rec" onclick="pickHotel(this,'b')">
+        <div class="h-img"><img src="https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=600&h=300&fit=crop&q=80" loading="lazy"></div>
+        <div class="h-body">
+          <div class="h-tag">Option B · Recommended</div>
+          <div class="h-name">W San Francisco</div>
+          <div class="h-props">
+            <div class="h-prop"><i data-lucide="map-pin"></i>9-min walk to Moscone</div>
+            <div class="h-prop"><i data-lucide="clock"></i>Early check-in for booth team</div>
+            <div class="h-prop"><i data-lucide="monitor"></i>Meeting room included</div>
+          </div>
+          <div class="h-price">$175/night <span class="h-pol">+$38 over policy</span></div>
+          <button class="h-btn">Select Hotel B</button>
+        </div>
+      </div>
+      <div class="h-card" onclick="pickHotel(this,'c')">
+        <div class="h-img"><img src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=300&fit=crop&q=80" loading="lazy"></div>
+        <div class="h-body">
+          <div class="h-tag">Option C · Policy-safe</div>
+          <div class="h-name">Marriott Courtyard SoMa</div>
+          <div class="h-props">
+            <div class="h-prop"><i data-lucide="map-pin"></i>28-min commute</div>
+            <div class="h-prop"><i data-lucide="triangle-alert"></i>45 team-hours lost</div>
+            <div class="h-prop"><i data-lucide="circle-check"></i>Within nightly policy</div>
+          </div>
+          <div class="h-price">$137/night <span class="h-pol ok">Within policy</span></div>
+          <button class="h-btn">Select Hotel C</button>
+        </div>
+      </div>
+    </div>
+    <div class="h-note"><strong>Why Hotel B?</strong> 9-min walk saves 45 team-hours vs Hotel C. Early check-in for 5 booth team members. Meeting room for internal briefings. $38 above nightly policy — justifiable given team productivity impact. Planned partner rate applied.</div>
+  </div>`;
+  initIcons();scrollMsgs();
+}
+
+async function pickHotel(card){
+  card.closest('.h-grid').querySelectorAll('.h-card').forEach(c=>{c.classList.remove('picked');if(c.querySelector('.h-btn'))c.querySelector('.h-btn').disabled=true});
+  card.classList.add('picked');
+  S.hotel='selected';
+  S.artifacts.push({name:'Travel Plan',status:'In progress'});S.readiness=60;updateRP();
+  await sleep(700);await showBudget();
+}
+
+async function showBudget(){
+  const c=marcyOpen();
+  await showThinking(c,[
+    {label:'Consolidating all vendor estimates…',ms:600},
+    {label:'Checking against $85,000 budget…',ms:500},
+    {label:'Flagging policy exceptions…',ms:400},
+  ]);
+  c.innerHTML='';
+  const p=c.closest('.m-body');
+  const t=document.createElement('div');t.className='m-text';
+  t.innerHTML=`The balanced plan is <strong>$82,400</strong> of the $85,000 budget — $2,600 headroom. Two policy exceptions documented.`;
+  p.insertBefore(t,c);
+
+  c.innerHTML=`<div class="card budget-card"><div class="card-hd"><i data-lucide="badge-dollar-sign"></i><span class="card-title">Budget summary</span></div><div class="card-body">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-size:22px;font-weight:700">$82,400</span><span style="font-size:13px;color:var(--t2)">of $85,000</span></div>
+    <div class="b-bar"><div class="b-fill" id="b-fill" style="width:0%"></div></div>
+    <div style="display:flex;gap:10px;margin-bottom:13px"><span class="badge b-green">$2,600 remaining</span><span class="badge b-gray">Medium confidence</span></div>
+    <div class="b-cats">
+      <div class="b-cat"><i data-lucide="plane"></i><span class="b-cat-name">Flights (12 attendees)</span><span class="b-cat-val">$21,000</span></div>
+      <div class="b-cat"><i data-lucide="building-2"></i><span class="b-cat-name">Hotels (12 × 4 nights)</span><span class="b-cat-val">$28,000</span></div>
+      <div class="b-cat"><i data-lucide="store"></i><span class="b-cat-name">Booth vendor</span><span class="b-cat-val">$18,000</span></div>
+      <div class="b-cat"><i data-lucide="utensils"></i><span class="b-cat-name">Client dinner</span><span class="b-cat-val">$9,000</span></div>
+      <div class="b-cat"><i data-lucide="car"></i><span class="b-cat-name">Ground transport</span><span class="b-cat-val">$4,200</span></div>
+      <div class="b-cat"><i data-lucide="monitor"></i><span class="b-cat-name">Meeting rooms</span><span class="b-cat-val">$2,200</span></div>
+    </div>
+    <div class="pol-chips"><span class="pol-chip">Hotel +$38/night over cap</span><span class="pol-chip">Client dinner +12% over meal policy</span></div>
+  </div><div class="card-foot"><button class="btn btn-primary" onclick="showApproval()">Generate approval packet</button><button class="btn btn-ghost">Send exceptions to finance</button></div></div>`;
+
+  S.artifacts.push({name:'Budget Summary',status:'Created'});S.readiness=72;updateRP();
+  initIcons();scrollMsgs();
+  setTimeout(()=>{const f=$('b-fill');if(f)f.style.width='97%'},200);
+}
+
+async function showApproval(){
+  const c=marcyOpen();
+  await showThinking(c,[
+    {label:'Compiling executive summary…',ms:600},
+    {label:'Adding vendor shortlist and Planned partner notes…',ms:500},
+    {label:'Documenting policy exceptions with reasoning…',ms:500},
+    {label:'Adding Sofia\'s specialist notes on booth terms…',ms:400},
+    {label:'Finalising approval packet…',ms:400},
+  ]);
+  c.innerHTML='';
+  const p=c.closest('.m-body');
+  const t=document.createElement('div');t.className='m-text';
+  t.innerHTML=`Mission ready for finance and procurement review. Approval readiness is <strong>85%</strong> — two items still pending.`;
+  p.insertBefore(t,c);
+
+  const checks=[
+    [true,'Executive summary'],
+    [true,'Cost breakdown ($82,400)'],
+    [true,'Vendor shortlist with Planned partner notes'],
+    [true,'Policy exceptions documented (2)'],
+    [true,'Risk register (6 risks)'],
+    [true,'Booth timing risk resolved'],
+    [true,'Specialist notes from Sofia (booth terms)'],
+    [false,'Booth vendor quote — awaiting final number'],
+    [false,'Finance exception approval'],
+  ];
+
+  const circ=2*Math.PI*18,pct=0.85,dash=circ*pct,offset=circ*(1-pct);
+  c.innerHTML=`<div class="card appr-card"><div class="appr-top"><svg width="52" height="52" viewBox="0 0 52 52"><circle cx="26" cy="26" r="18" fill="none" stroke="var(--bd)" stroke-width="3.5"/><circle cx="26" cy="26" r="18" fill="none" stroke="var(--green)" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="${dash.toFixed(2)} ${circ.toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}" transform="rotate(-90 26 26)"/><text x="26" y="30" text-anchor="middle" font-size="11" font-weight="700" font-family="Montserrat,sans-serif" fill="var(--t1)">85%</text></svg><div><div class="appr-pct">Approval ready</div><div class="appr-sub">2 items still pending</div></div><span class="badge b-green" style="margin-left:auto">Ready to submit</span></div>${checks.map(([done,lbl])=>`<div class="appr-row"><div class="appr-ico ${done?'ai-done':'ai-pend'}">${done?'✓':'!'}</div><span style="${!done?'color:var(--t3)':''}">${lbl}</span></div>`).join('')}<div class="card-foot"><button class="btn btn-primary">Submit for approval</button><button class="btn btn-outline">Export PDF</button><button class="btn btn-ghost">Request specialist review</button></div></div>`;
+
+  const art=document.createElement('div');
+  art.className='artifact';
+  art.innerHTML=`<div class="art-ico" style="background:var(--green-bg)"><i data-lucide="shield-check" style="color:var(--green)"></i></div><div><div class="art-name">Approval Packet</div><div class="art-sub">Ready for finance review</div></div><div class="art-chev"><i data-lucide="chevron-right"></i></div>`;
+  c.after(art);
+
+  S.artifacts.push({name:'Approval Packet',status:'Created'});S.readiness=85;updateRP();
+  initIcons();scrollMsgs();
+}
+
+// ── Misc ─────────────────────────────────────────────────
+function flashSb(id){
+  const el=$(id);if(!el)return;
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('on'));
+  el.classList.add('on');
+  if(!$('app').classList.contains('sb-open'))toggleSidebar();
+}
+
+function editMission(btn){
+  const vals=btn.closest('.card').querySelectorAll('.mc-val');
+  vals.forEach(el=>{
+    if(el.querySelector('input'))return;
+    const inp=document.createElement('input');
+    inp.value=el.textContent;
+    inp.style.cssText='border:1px solid var(--bd);border-radius:5px;padding:3px 7px;font-size:13px;font-family:var(--f);width:100%;outline:none;background:var(--sb)';
+    el.innerHTML='';el.appendChild(inp);
+  });
+  btn.textContent='Save';
+  btn.onclick=()=>{vals.forEach(el=>{const inp=el.querySelector('input');if(inp)el.textContent=inp.value});btn.textContent='Edit details';btn.onclick=()=>editMission(btn)};
+}
+
+function resetDemo(){
+  $('empty').classList.remove('hidden');
+  $('msgs').classList.add('hidden');
+  $('input-area').style.display='none';
+  $('msgs').innerHTML='';
+  $('tb-title').textContent='';
+  $('rp-body').innerHTML='<div class="rp-empty">Start a mission to see details here</div>';
+  $('rp-title').textContent='Mission overview';
+  $('app').classList.remove('ws-open');
+  Object.assign(S,{step:0,hotel:null,decisions:{},artifacts:[],risks:6,openDec:4,readiness:0});
+  decIdx=0;initIcons();
+}
+// ── Drag-to-resize ────────────────────────────────────────
+function initResize(){
+  document.querySelectorAll('.rz').forEach(handle=>{
+    let startX,startW,panel;
+    handle.addEventListener('mousedown',e=>{
+      const p=handle.dataset.panel;
+      panel=document.querySelector('.'+p);
+      startX=e.clientX;startW=panel.offsetWidth;
+      handle.classList.add('dragging');
+      document.addEventListener('mousemove',onMove);
+      document.addEventListener('mouseup',onUp);
+      e.preventDefault();
+    });
+    function onMove(e){
+      const dir=handle.id==='rz-left'?1:-1;
+      const min=parseInt(getComputedStyle(panel).minWidth)||160;
+      const max=parseInt(getComputedStyle(panel).maxWidth)||560;
+      const nw=Math.max(min,Math.min(max,startW+(e.clientX-startX)*dir));
+      panel.style.width=nw+'px';
+    }
+    function onUp(){handle.classList.remove('dragging');document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp)}
+  });
+}
+document.addEventListener('DOMContentLoaded',initResize);
+
+function onWInput(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,140)+'px';el.closest('.w-box').querySelector('.wb-send').classList.toggle('on',el.value.trim().length>0)}
+function onIInput(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';$('i-send').classList.toggle('on',el.value.trim().length>0)}
+function sendMsg(){const ta=$('i-ta'),txt=ta.value.trim();if(!txt)return;ta.value='';ta.style.height='22px';$('i-send').classList.remove('on');addUserMsg(txt)}
+</script>
+</body>
+</html>
